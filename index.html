@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Heart Motion</title>
+<title>Heart Animation</title>
 <style>
   body {
     margin: 0;
     height: 100vh;
-    background: radial-gradient(circle at center, #000010 60%, #000);
+    background: #000;
     overflow: hidden;
     display: flex;
     justify-content: center;
@@ -36,11 +36,6 @@
     letter-spacing: 1px;
   }
 
-  #playBtn:hover {
-    transform: scale(1.08);
-    box-shadow: 0 0 35px rgba(255, 0, 50, 1);
-  }
-
   #playBtn.fade {
     opacity: 0;
     transform: scale(0.8);
@@ -50,75 +45,102 @@
 </style>
 </head>
 <body>
+
 <button id="playBtn">Play ❤️</button>
 <canvas id="heartCanvas"></canvas>
 
-<!-- Romantic background music -->
 <audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2022/02/23/audio_b98b84b0e4.mp3?filename=beautiful-piano-ambient-112191.mp3" preload="auto"></audio>
 
 <script>
-  const canvas = document.getElementById("heartCanvas");
-  const ctx = canvas.getContext("2d");
-  const playBtn = document.getElementById("playBtn");
-  const music = document.getElementById("bgMusic");
+const canvas = document.getElementById("heartCanvas");
+const ctx = canvas.getContext("2d");
+const playBtn = document.getElementById("playBtn");
+const music = document.getElementById("bgMusic");
 
-  function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  resizeCanvas();
-  window.addEventListener("resize", resizeCanvas);
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
 
-  let t = 0;
-  const trail = [];
-  let animationStarted = false;
+let t = 0;
+const trail = [];
+let animationStarted = false;
+let followHeart = false; // chaos first, then heart
 
-  function heartPath(t) {
-    const x = 16 * Math.pow(Math.sin(t), 3);
-    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t)
-            - 2 * Math.cos(3 * t) - Math.cos(4 * t);
-    return { x, y };
-  }
+// Heart formula
+function heartPath(t) {
+  const x = 16 * Math.pow(Math.sin(t), 3);
+  const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t)
+          - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+  return { x, y };
+}
 
-  function draw() {
-    if (!animationStarted) return;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+// For chaotic motion first
+let chaosX = 0, chaosY = 0;
 
-    const scale = Math.min(canvas.width, canvas.height) / 40;
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2 + 50;
+function draw() {
+  if (!animationStarted) return;
 
+  ctx.fillStyle = "rgba(0,0,0,0.1)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const scale = Math.min(canvas.width, canvas.height) / 40;
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2 + 50;
+
+  let x, y;
+
+  if (!followHeart) {
+    // Random movement before heart reveal
+    chaosX += (Math.random() - 0.5) * 30;
+    chaosY += (Math.random() - 0.5) * 30;
+
+    x = cx + chaosX * 0.1;
+    y = cy + chaosY * 0.1;
+  } else {
+    // Heart path after delay
     const p = heartPath(t);
-    const x = centerX + p.x * scale;
-    const y = centerY - p.y * scale;
-    trail.push({ x, y });
-
-    for (let i = 0; i < trail.length; i++) {
-      const alpha = i / trail.length;
-      ctx.fillStyle = `rgba(255, 0, 0, ${alpha})`;
-      ctx.beginPath();
-      ctx.arc(trail[i].x, trail[i].y, 3, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    if (trail.length > 500) trail.shift();
+    x = cx + p.x * scale;
+    y = cy - p.y * scale;
 
     t += 0.05;
     if (t > Math.PI * 2) t = 0;
-
-    requestAnimationFrame(draw);
   }
 
-  playBtn.addEventListener("click", () => {
-    playBtn.classList.add("fade");
-    setTimeout(() => {
-      playBtn.style.display = "none";
-      animationStarted = true;
-      draw();
-      music.play();
-    }, 1000);
-  });
+  trail.push({ x, y });
+
+  // Draw trail
+  for (let i = 0; i < trail.length; i++) {
+    const alpha = i / trail.length;
+    ctx.fillStyle = `rgba(255,0,0,${alpha})`;
+    ctx.beginPath();
+    ctx.arc(trail[i].x, trail[i].y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (trail.length > 1000) trail.shift();
+
+  requestAnimationFrame(draw);
+}
+
+playBtn.addEventListener("click", () => {
+  playBtn.classList.add("fade");
+
+  setTimeout(() => {
+    playBtn.style.display = "none";
+    animationStarted = true;
+    draw();
+    music.play();
+
+    // Switch to perfect heart after 3 seconds
+    setTimeout(() => followHeart = true, 3000);
+
+  }, 1000);
+});
 </script>
+
 </body>
 </html>
+
