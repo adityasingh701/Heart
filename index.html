@@ -47,6 +47,8 @@
 <body>
 
 <button id="playBtn">Play ❤️</button>
+  <audio id="bgm" src="musicc.mp3" autoplay loop></audio>
+  
 <canvas id="heartCanvas"></canvas>
 
 <script>
@@ -120,6 +122,12 @@ playBtn.addEventListener("click", () => {
     draw();
   }, 1000);
 });
+
+  document.addEventListener("click", () => {
+    const a = document.getElementById("bgm");
+    if (a.paused) a.play();
+}, { once: true });
+  
 </script>
 
 </body>
